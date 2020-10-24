@@ -16,8 +16,8 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import torch
 
-import cases
-from cloud_array import get_field_from_data_array
+import solver.cases as cases
+from .cloud_array import get_field_from_data_array
 
 
 def load_forces_dataset(training_set_dir):

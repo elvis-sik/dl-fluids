@@ -21,11 +21,11 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import torch
 
-import cloud_array as ca
-import cases
-from templates import (generate_mesh, create_internal_cloud_file,
+import solver.cloud_array as ca
+import solver.cases as cases
+from solver.templates import (generate_mesh, create_internal_cloud_file,
                        create_internal_cloud_dir, create_boundary_conditions)
-import validation as val
+import solver.validation as val
 
 
 class SimulationError(BaseException):
@@ -33,7 +33,7 @@ class SimulationError(BaseException):
     pass
 
 
-def run_simulation(openfoam_dir: Union[str, Path] = './OpenFOAM/'):
+def run_simulation(openfoam_dir: Union[str, Path] = './solver/OpenFOAM/'):
     """Calls OpenFOAM on the case directory."""
     previous_dir = Path.cwd()
     os.chdir(openfoam_dir)
@@ -46,7 +46,7 @@ def run_simulation(openfoam_dir: Union[str, Path] = './OpenFOAM/'):
 
 
 def move_files(sample_dir: Union[str, Path],
-               openfoam_dir: Union[str, Path] = './OpenFOAM'):
+               openfoam_dir: Union[str, Path] = './solver/OpenFOAM'):
     """Moves files outputted by OpenFOAM to the sample directory."""
     def move(path, target_dir):
         """Moves file path to directory target_dir."""
@@ -60,7 +60,7 @@ def move_files(sample_dir: Union[str, Path],
     move(forces_file, sample_dir)
 
 
-def clean_previous_run(openfoam_dir: Union[str, Path] = './OpenFOAM',
+def clean_previous_run(openfoam_dir: Union[str, Path] = './solver/OpenFOAM',
                        verbose: bool = True):
     """Clears files outputted by a previous OpenFOAM run."""
     previous_dir = Path.cwd()
@@ -75,7 +75,7 @@ def clean_previous_run(openfoam_dir: Union[str, Path] = './OpenFOAM',
 def solve_single_case(geom_coords: cases.Coordinates,
                       physics: cases.PhysParams,
                       cloud_array: ca.CloudArray,
-                      openfoam_dir: Union[str, Path] = './OpenFOAM'):
+                      openfoam_dir: Union[str, Path] = './solver/OpenFOAM'):
     """Create and solve with OpenFOAM a flow case.
 
     Arguments:
@@ -100,11 +100,11 @@ def solve_single_case(geom_coords: cases.Coordinates,
 
 def solve_cases(case_sequence: Iterator[cases.Case],
                 cloud_array: ca.CloudArray,
-                openfoam_dir='./OpenFOAM',
+                openfoam_dir='./solver/OpenFOAM',
                 target_base_dir='./data/',
                 verbose=True,
                 n_cases=None,
-                broken_cases_dir='./error'):
+                broken_cases_dir='./broken-cases'):
     """Solves a sequence of cases.
 
     Arguments:
@@ -192,8 +192,7 @@ if __name__ == '__main__':
                                              edge_lc=2.)
 
     solve_cases(polygon_cases,
-                openfoam_dir='./OpenFOAM',
+                openfoam_dir='./solver/OpenFOAM',
                 cloud_array=ca.CloudArray(),
-                target_base_dir=data_dir,
                 verbose=True,
                 n_cases=n_cases)

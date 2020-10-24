@@ -205,7 +205,7 @@ functions
 	liftDir (0 1 0);
 	dragDir (1 0 0);
 	pitchAxis (0 0 1);
-	magUInf 0.7800633361291085;
+	magUInf 1.2139893952964855;
 	lRef 1;         // reference lenght for moments!!!
 	Aref 2.0;         // reference area 1 for 2d
 

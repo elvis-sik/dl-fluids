@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import torch
 
-from cases import Coordinates
+from .cases import Coordinates
 
 
 def generate_mesh(coords: Coordinates, edge_lc=0.2, openfoam_dir='./OpenFOAM'):

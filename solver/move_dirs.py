@@ -1,4 +1,4 @@
-"""Script to process data after it has been created.
+"""Functions to process data after it has been created.
 
 The idea is to use the funcs here to process data after solving cases the
 following way:

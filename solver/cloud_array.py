@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import torch
 
-from cases import Coordinates
+from .cases import Coordinates
 
 
 class InternalCloudField(Coordinates):
@@ -275,7 +275,7 @@ def save_field_images(sample_dir, data_array):
 def load_forces(
         forces_file='./OpenFOAM/postProcessing/forceCoeffs_object/0/forceCoeffs.dat',
         return_all=False):
-        """Load forces file outputted by OpenFOAM."""
+    """Loads forces file outputted by OpenFOAM."""
     dat_array = np.loadtxt(forces_file)
 
     if return_all:
