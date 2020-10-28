@@ -25,6 +25,8 @@ from pathlib import Path
 from shutil import rmtree
 from typing import Iterator
 
+from .cloud_array import load_forces
+
 
 def get_all_data_dirs(dir_with_solvers='.',
                       data_subdir_name: str = 'data') -> Iterator[Path]:
@@ -120,3 +122,33 @@ def split_data_dir(data_dir, n_train: int, n_val: int, n_test: int):
             current_sample = all_samples[current_sample_index]
             current_sample.rename(target / str(i))
             current_sample_index += 1
+
+
+def find_big_cd(data_dir, cd_threshold: float = 50.):
+    """Yields all samples with |C_D| > cd_threshold.
+
+    Why this is useful: a sample might have a C_D like 1.17e143 without
+    OpenFOAM throwing an error. We don't want those."""
+    def biggest_sample_cd(sample_dir):
+        """Load the biggest C_D of sample."""
+        sample_dir = Path(sample_dir)
+        forces_dict = load_forces(sample_dir / 'forceCoeffs.dat',
+                                  return_all=True)
+        cd_arr = forces_dict['C_D']
+        return np.max(cd_arr)
+
+    for sample in Path(data_dir).glob('*'):
+        biggest_cd = biggest_sample_cd(sample)
+        if abs(biggest_cd) > cd_threshold:
+            yield sample, biggest_cd
+
+
+def list_big_cd(data_dir, cd_threshold: float = 50.):
+    """Returns ordered list of samples of which |C_D| > cd_threshold."""
+    def get_cd(samp_cd):
+        sample, biggest_cd = samp_cd
+        return biggest_cd
+
+    big_cd_samples = list(find_big_cd(data_dir, cd_threshold))
+    big_cd_samples.sort(key=get_cd)
+    return big_cd_samples
