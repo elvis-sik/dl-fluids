@@ -1195,12 +1195,12 @@ def load_identity_trainer(checkpoint_dir=DEFAULT_CHECKPOINT_DIR,
                                            model_manager, loss_registry)
 
 
-def per_channel_loss(inp, target):
+def per_channel_loss(inp, target, channel_weights=(1, 5, 10)):
     loss = torch.tensor(0., device='cuda')
 
-    loss += F.l1_loss(inp[:, 0, :, :], target[:, 0, :, :]) * 1
-    loss += F.l1_loss(inp[:, 1, :, :], target[:, 1, :, :]) * 5
-    loss += F.l1_loss(inp[:, 2, :, :], target[:, 2, :, :]) * 10
+    loss += F.l1_loss(inp[:, 0, :, :], target[:, 0, :, :]) * channel_weights[0]
+    loss += F.l1_loss(inp[:, 1, :, :], target[:, 1, :, :]) * channel_weights[1]
+    loss += F.l1_loss(inp[:, 2, :, :], target[:, 2, :, :]) * channel_weights[2]
 
     return loss
 
