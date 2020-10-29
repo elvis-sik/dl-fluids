@@ -91,10 +91,9 @@ class Sample(abc.ABC):
 
 class DefaultSample(Sample):
     def nn_input(self):
-        nn_inp = np.array([self.geom, self.geom, self.geom])
+        nn_inp = np.array([self.geom, self.geom])
         nn_inp[0, ...] *= self.reynolds
         nn_inp[1, ...] *= self.freestream_vel[0]
-        nn_inp[2, ...] *= self.freestream_vel[1]
         return nn_inp
 
     def nn_output(self):
@@ -133,7 +132,6 @@ class NormalizedVelPressSample(VelPressSample):
     def nn_input(self):
         nn_inp = super().nn_input()
         nn_inp[1, :, :] /= self._inp_vel_scale[0]
-        nn_inp[2, :, :] /= self._inp_vel_scale[1]
         return nn_inp
 
     def nn_output(self):
@@ -168,7 +166,7 @@ def calculate_scaling_factors(training_set_dir):
         sample_inp = sample['input'].numpy()
         sample_out = sample['output'].numpy()
 
-        inp_entries.append(np.mean(np.abs(sample_inp[1:, :, :]), axis=(1, 2)))
+        inp_entries.append(np.mean(np.abs(sample_inp[1, :, :])))
         out_entries.append(np.mean(np.abs(sample_out), axis=(1, 2)))
 
     inp_vel_scale = np.mean(np.vstack(inp_entries), axis=0)
@@ -1235,9 +1233,9 @@ def create_training_problem(
         network.to(device)
         sample_type = CDSample.freeze_scaling_factors(data_dir / 'train')
     else:
-        network_kwargs = {'input_channels': 3, 'out_channels': 3}
+        network_kwargs = {'input_channels': 2, 'out_channels': 3}
         if sample_type == 'default':
-            network_kwargs = {'input_channels': 3, 'out_channels': 4}
+            network_kwargs = {'input_channels': 2, 'out_channels': 4}
             sample_type = DefaultSample
         elif sample_type == 'no_cd':
             sample_type = VelPressSample
