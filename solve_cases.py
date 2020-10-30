@@ -24,7 +24,8 @@ import torch
 import solver.cloud_array as ca
 import solver.cases as cases
 from solver.templates import (generate_mesh, create_internal_cloud_file,
-                       create_internal_cloud_dir, create_boundary_conditions)
+                              create_internal_cloud_dir,
+                              create_boundary_conditions)
 import solver.validation as val
 
 
