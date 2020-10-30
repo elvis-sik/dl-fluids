@@ -372,21 +372,72 @@ class LossRegistry:
         self.epochs_of_history = epochs_of_history
 
 
-def compute_average_loss(network, loss_fn, data_gen, device='cpu'):
+def relative_error_loss_maximum(pred, exp, aggregation=torch.mean):
+    error_tensor = torch.abs(pred - exp) / torch.maximum(
+        torch.abs(pred), torch.abs(exp))
+    return aggregation(error_tensor)
+
+
+def compute_single_loss(network,
+                        loss_fn,
+                        inp,
+                        exp,
+                        device='cpu',
+                        zero_geom=True):
+    inp = inp.to(torch.float32)
+    exp = exp.to(torch.float32)
+    inp = inp.to(device)
+    exp = exp.to(device)
+
+    with torch.no_grad():
+        out = network(inp)
+
+    if zero_geom:
+        n_channels = out.shape[0]
+        mask = inp[0] == 0
+        for i in range(n_channels):
+            out[i][mask] = 0
+
+    return loss_fn(out, exp)
+
+
+def compute_all_losses(network,
+                       loss_fn,
+                       data_gen,
+                       device='cpu',
+                       zero_geom=True):
+    losses = []
+
+    for data_dict in data_gen:
+        inp = data_dict['input']
+        exp = data_dict['output']
+        losses.append(
+            compute_single_loss(network,
+                                loss_fn,
+                                inp,
+                                exp,
+                                device=device,
+                                zero_geom=zero_geom))
+
+    return losses
+
+
+def compute_average_loss(network,
+                         loss_fn,
+                         data_gen,
+                         device='cpu',
+                         zero_geom=True):
     total_loss = 0
 
     for data_dict in data_gen:
         inp = data_dict['input']
         exp = data_dict['output']
-
-        inp = inp.to(torch.float32)
-        exp = exp.to(torch.float32)
-        inp = inp.to(device)
-        exp = exp.to(device)
-
-        with torch.no_grad():
-            out = network(inp)
-        total_loss += loss_fn(out, exp)
+        total_loss += compute_single_loss(network,
+                                          loss_fn,
+                                          inp,
+                                          exp,
+                                          device=device,
+                                          zero_geom=zero_geom)
 
     return float(total_loss / len(data_gen))
 
@@ -440,12 +491,16 @@ class EpochNumberCheckpointer(Checkpointer):
 
 
 class LossCheckpointer(Checkpointer):
-    def __init__(self, checkpoint_dir: Union[str, Path], every: int,
+    def __init__(self,
+                 checkpoint_dir: Union[str, Path],
+                 every: int,
                  loss_registry: LossRegistry,
-                 training_problem: TrainingProblem):
+                 training_problem: TrainingProblem,
+                 zero_geom: bool = True):
         super().__init__(checkpoint_dir, every)
         self._training_problem = training_problem
         self._loss_registry = loss_registry
+        self._zero_geom = zero_geom
 
     def _checkpoint(self):
         training_loss = self._average_loss(self._get_data('train'))
@@ -465,7 +520,8 @@ class LossCheckpointer(Checkpointer):
         return compute_average_loss(self._training_problem.network,
                                     self._training_problem.loss_fn,
                                     data,
-                                    device=self.device)
+                                    device=self.device,
+                                    self._zero_geom)
 
     @property
     def device(self):
@@ -1084,7 +1140,8 @@ def initialize_network(loss_fn,
                        network_type=unet.SimpleNet,
                        network_kwargs={},
                        num_initializations=10,
-                       device='cpu'):
+                       device='cpu',
+                       zero_geom=True):
     best_loss = np.inf
     best_net = None
 
@@ -1098,7 +1155,11 @@ def initialize_network(loss_fn,
         if num_initializations == 1:
             return network
 
-        loss = compute_average_loss(network, loss_fn, data_gen, device=device)
+        loss = compute_average_loss(network,
+                                    loss_fn,
+                                    data_gen,
+                                    device=device,
+                                    zero_geom=zero_geom)
         if loss < best_loss:
             best_net = network
 
@@ -1111,7 +1172,8 @@ def create_checkpointers(training_problem: TrainingProblem,
                          print_every=5,
                          checkpoint_dir=DEFAULT_CHECKPOINT_DIR,
                          end_character='\r',
-                         timer=None):
+                         timer=None,
+                         zero_geom=True):
 
     manager = ModelManager(checkpoint_dir)
     state_checkpointer = StateCheckpointer(checkpoint_dir, save_every,
@@ -1124,8 +1186,11 @@ def create_checkpointers(training_problem: TrainingProblem,
     epoch_number_checkpointer = EpochNumberCheckpointer(
         checkpoint_dir, loss_registry)
 
-    loss_checkpointer = LossCheckpointer(checkpoint_dir, 1, loss_registry,
-                                         training_problem)
+    loss_checkpointer = LossCheckpointer(checkpoint_dir,
+                                         1,
+                                         loss_registry,
+                                         training_problem,
+                                         zero_geom=zero_geom)
 
     checkpointers = [
         epoch_number_checkpointer,
@@ -1267,7 +1332,8 @@ def create_training_problem(
                                      network_type=network_type,
                                      network_kwargs=network_kwargs,
                                      num_initializations=num_initializations,
-                                     device=device)
+                                     device=device,
+                                     zero_geom=True)
 
     optimizer = optimizer(network.parameters(), **optimizer_params)
 
@@ -1313,9 +1379,14 @@ def create_trainer(data_dir='./data',
         optimizer_params=optimizer_params,
         extend_network=extend_network)
 
-    checkpointer = create_checkpointers(training_problem, loss_registry,
-                                        save_every, print_every,
-                                        checkpoint_dir, end_character, timer)
+    checkpointer = create_checkpointers(training_problem,
+                                        loss_registry,
+                                        save_every,
+                                        print_every,
+                                        checkpoint_dir,
+                                        end_character,
+                                        timer,
+                                        ezero_geom=bool(extend_network))
 
     return Trainer(training_problem, checkpointer)
 
@@ -1359,9 +1430,14 @@ def load_trainer(checkpoint_dir=DEFAULT_CHECKPOINT_DIR,
     else:
         state_checkpointer.load_model(checkpoint_file)
 
-    checkpointer = create_checkpointers(training_problem, loss_registry,
-                                        save_every, print_every,
-                                        checkpoint_dir, end_character, timer)
+    checkpointer = create_checkpointers(training_problem,
+                                        loss_registry,
+                                        save_every,
+                                        print_every,
+                                        checkpoint_dir,
+                                        end_character,
+                                        timer,
+                                        zero_geom=True)
 
     return Trainer(training_problem, checkpointer)
 
