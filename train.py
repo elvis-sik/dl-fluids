@@ -1268,7 +1268,7 @@ def per_channel_loss(inp, target, channel_weights=(1, 5, 10)):
     return loss
 
 
-def relative_error_loss(inp, target):
+def relative_error_loss_norm(inp, target):
     mean_rel_error = torch.mean((inp - target)**2 / (inp**2 + target**2 + 1))
     loss = torch.atan(mean_rel_error)
     loss += np.pi / 2
