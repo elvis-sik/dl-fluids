@@ -201,13 +201,13 @@ class ThuereyDataset(torch.utils.data.Dataset):
 class Dataset(torch.utils.data.Dataset):
     base_directory: Path
     samples: List[Path]
-    _sample_type: Sample
+    sample_type: Sample
 
     def __init__(self,
                  base_directory: Union[str, Path] = './data/',
                  sample_type: Sample = DefaultSample):
         self.base_directory = Path(base_directory)
-        self._sample_type = sample_type
+        self.sample_type = sample_type
         self.samples = []
 
         for path in self.base_directory.glob('*'):
@@ -225,12 +225,15 @@ class Dataset(torch.utils.data.Dataset):
             'output': self._get_nn_output(sample),
         }
 
+    def load_sample_from_dir(self, sample_dir):
+        sample_dir = self._create_sample(sample_dir)
+
     def get_sample(self, sample_number):
         sample_dir = self._get_sample_directory(sample_number)
         return self._create_sample(sample_dir)
 
     def _create_sample(self, sample_directory):
-        return self._sample_type(sample_directory)
+        return self.sample_type(sample_directory)
 
     def _get_sample_directory(self, sample_number):
         return self.samples[sample_number]
