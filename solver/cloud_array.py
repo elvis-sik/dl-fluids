@@ -293,7 +293,7 @@ def create_data_array(cloud_array: CloudArray,
                       openfoam_dir='./OpenFOAM') -> np.ndarray:
     """Creates sample data array from fields outputted by OpenFOAM."""
     openfoam_dir = Path(openfoam_dir)
-    forces_file = './OpenFOAM/postProcessing/forceCoeffs_object/0/forceCoeffs.dat'
+    forces_file = openfoam_dir / 'postProcessing/forceCoeffs_object/0/forceCoeffs.dat'
     internal_cloud_final = openfoam_dir / 'postProcessing/internalCloud/150/'
 
     fields = load_all_fields_from_cloud_array(
