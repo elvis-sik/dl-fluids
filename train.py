@@ -526,7 +526,7 @@ class LossCheckpointer(Checkpointer):
                                     self._training_problem.loss_fn,
                                     data,
                                     device=self.device,
-                                    self._zero_geom)
+                                    zero_geom=self._zero_geom)
 
     @property
     def device(self):
