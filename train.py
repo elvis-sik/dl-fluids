@@ -430,7 +430,7 @@ def compute_all_losses(network,
                                    exp,
                                    device=device,
                                    zero_geom=zero_geom,
-                                   pass_mask=True))
+                                   pass_mask=pass_mask))
 
     return losses
 
