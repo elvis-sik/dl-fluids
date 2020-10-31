@@ -1391,7 +1391,7 @@ def create_trainer(data_dir='./data',
                                         checkpoint_dir,
                                         end_character,
                                         timer,
-                                        ezero_geom=bool(extend_network))
+                                        zero_geom=bool(extend_network))
 
     return Trainer(training_problem, checkpointer)
 
