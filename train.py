@@ -375,9 +375,10 @@ class LossRegistry:
         self.epochs_of_history = epochs_of_history
 
 
-def relative_error_loss_maximum(pred, exp, aggregation=torch.mean):
+def relative_error_loss_maximum(pred, exp, mask, aggregation=torch.mean):
     error_tensor = torch.abs(pred - exp) / torch.max(torch.abs(pred),
                                                      torch.abs(exp))
+    error_tensor[mask] = 0
     return aggregation(error_tensor)
 
 
@@ -386,7 +387,8 @@ def compute_minibatch_loss(network,
                            inp,
                            exp,
                            device='cpu',
-                           zero_geom=True):
+                           zero_geom=True,
+                           pass_mask=False):
     inp = inp.to(torch.float32)
     exp = exp.to(torch.float32)
     inp = inp.to(device)
@@ -401,6 +403,9 @@ def compute_minibatch_loss(network,
         for i in range(n_channels):
             out[:, i][mask] = 0
 
+    if pass_mask:
+        return loss_fn(out, exp, mask)
+
     return loss_fn(out, exp)
 
 
@@ -408,7 +413,8 @@ def compute_all_losses(network,
                        loss_fn,
                        data_gen,
                        device='cpu',
-                       zero_geom=True):
+                       zero_geom=True,
+                       pass_mask=False):
     losses = []
 
     for data_dict in data_gen:
