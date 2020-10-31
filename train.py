@@ -1399,7 +1399,7 @@ def create_trainer(data_dir='./data',
                                         checkpoint_dir,
                                         end_character,
                                         timer,
-                                        zero_geom=bool(extend_network))
+                                        zero_geom=False)
 
     return Trainer(training_problem, checkpointer)
 
@@ -1450,7 +1450,7 @@ def load_trainer(checkpoint_dir=DEFAULT_CHECKPOINT_DIR,
                                         checkpoint_dir,
                                         end_character,
                                         timer,
-                                        zero_geom=True)
+                                        zero_geom=False)
 
     return Trainer(training_problem, checkpointer)
 
