@@ -383,12 +383,12 @@ def relative_error_loss_maximum(pred, exp, aggregation=torch.mean):
     return aggregation(error_tensor)
 
 
-def compute_single_loss(network,
-                        loss_fn,
-                        inp,
-                        exp,
-                        device='cpu',
-                        zero_geom=True):
+def compute_minibatch_loss(network,
+                           loss_fn,
+                           inp,
+                           exp,
+                           device='cpu',
+                           zero_geom=True):
     inp = inp.to(torch.float32)
     exp = exp.to(torch.float32)
     inp = inp.to(device)
@@ -399,9 +399,9 @@ def compute_single_loss(network,
 
     if zero_geom:
         n_channels = out.shape[0]
-        mask = inp[0] == 0
+        mask = inp[:, 0] == 0
         for i in range(n_channels):
-            out[i][mask] = 0
+            out[:, i][mask] = 0
 
     return loss_fn(out, exp)
 
@@ -417,12 +417,12 @@ def compute_all_losses(network,
         inp = data_dict['input']
         exp = data_dict['output']
         losses.append(
-            compute_single_loss(network,
-                                loss_fn,
-                                inp,
-                                exp,
-                                device=device,
-                                zero_geom=zero_geom))
+            compute_minibatch_loss(network,
+                                   loss_fn,
+                                   inp,
+                                   exp,
+                                   device=device,
+                                   zero_geom=zero_geom))
 
     return losses
 
@@ -437,12 +437,12 @@ def compute_average_loss(network,
     for data_dict in data_gen:
         inp = data_dict['input']
         exp = data_dict['output']
-        total_loss += compute_single_loss(network,
-                                          loss_fn,
-                                          inp,
-                                          exp,
-                                          device=device,
-                                          zero_geom=zero_geom)
+        total_loss += compute_minibatch_loss(network,
+                                             loss_fn,
+                                             inp,
+                                             exp,
+                                             device=device,
+                                             zero_geom=zero_geom)
 
     return float(total_loss / len(data_gen))
 
