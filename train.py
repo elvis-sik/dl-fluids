@@ -148,9 +148,7 @@ class NormalizedVelPressSample(VelPressSample):
 
 class CDSample(NormalizedVelPressSample):
     def nn_output(self):
-        # the layer 3 of the data_array contains the
-        # drag coefficient C_D in all of its entries
-        cd_series = force_series(self, which_coeff='C_D')
+        cd_series = self.force_series(which_coeff='C_D')
         final_few_cd = cd_series[-10:]
         c_d = np.mean(final_few_cd)
         return np.ones((1, 1, 1), dtype=float) * c_d
