@@ -398,7 +398,7 @@ def compute_minibatch_loss(network,
         out = network(inp)
 
     if zero_geom:
-        n_channels = out.shape[0]
+        n_channels = out.shape[1]
         mask = inp[:, 0] == 0
         for i in range(n_channels):
             out[:, i][mask] = 0
