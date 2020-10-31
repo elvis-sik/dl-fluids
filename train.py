@@ -378,8 +378,8 @@ class LossRegistry:
 
 
 def relative_error_loss_maximum(pred, exp, aggregation=torch.mean):
-    error_tensor = torch.abs(pred - exp) / torch.maximum(
-        torch.abs(pred), torch.abs(exp))
+    error_tensor = torch.abs(pred - exp) / torch.max(torch.abs(pred),
+                                                     torch.abs(exp))
     return aggregation(error_tensor)
 
 
