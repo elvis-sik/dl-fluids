@@ -793,8 +793,12 @@ class Analyzer:
         self.trainer = trainer
         self.device = device
         self.dtype = dtype
-        self._relative_error_stats = {'train': None, 'val': None}
-        self._relative_error_thuerey_memoized = {'train': None, 'val': None}
+        self._relative_error_stats = {'train': None, 'val': None, 'test': None}
+        self._relative_error_thuerey_memoized = {
+            'train': None,
+            'val': None,
+            'test': None
+        }
 
     @property
     def problem(self):
